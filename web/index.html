@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="google-signin-client_id"
+      content="208804397507-0bu3dp1neogk2a5nl75s85cvtthvcc81.apps.googleusercontent.com"
+    />
+    <title>PricePulse</title>
+
+    <!-- ✅ Google Identity SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background-color: #f9f5ff;
+        font-family: Inter, sans-serif;
+      }
+      #flutter_container {
+        width: 100%;
+        height: 100%;
+      }
+      #googleSignInDiv {
+        display: none; /* hidden - Flutter handles showing login options */
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- ✅ Flutter’s render mount point -->
+    <div id="flutter_container">
+      <flutter-app></flutter-app>
+    </div>
+
+    <!-- ✅ Google Sign-In hidden container -->
+    <div id="googleSignInDiv"></div>
+
+    <script>
+      // ✅ Handles Google response and sends it to backend
+      function handleCredentialResponse(response) {
+        const idToken = response.credential;
+        console.log("✅ Got Google ID token:", idToken);
+
+        fetch("http://localhost:8080/auth/google/web", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken }),
+        })
+          .then(async (res) => {
+            const data = await res.json();
+            if (res.ok) {
+              localStorage.setItem("token", data.token);
+              localStorage.setItem("email", data.email || "");
+              window.postMessage(
+                JSON.stringify({ type: "google_login_success" }),
+                "*"
+              );
+            } else {
+              console.error("❌ Google login failed:", data);
+            }
+          })
+          .catch((err) => console.error("Network error:", err));
+      }
+
+      // ✅ Initialize Google Sign-In (hidden button)
+      window.onload = function () {
+        google.accounts.id.initialize({
+          client_id:
+            "208804397507-0bu3dp1neogk2a5nl75s85cvtthvcc81.apps.googleusercontent.com",
+          callback: handleCredentialResponse,
+        });
+
+        google.accounts.id.renderButton(
+          document.getElementById("googleSignInDiv"),
+          { theme: "outline", size: "large", width: 280 }
+        );
+      };
+    </script>
+
+    <!-- ✅ Load Flutter web app -->
+    <script src="main.dart.js" defer></script>
+  </body>
+</html>

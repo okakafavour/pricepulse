@@ -1,0 +1,52 @@
+# Flutter/Dart/Pub related
+.dart_tool/
+.packages
+.pub/
+build/
+flutter_*.png
+
+# Generated plugin registrant
+flutter_export_environment.sh
+
+# Android related
+**/android/.gradle/
+**/android/app/release/
+**/android/local.properties
+**/android/key.properties
+
+# iOS/macOS related
+**/ios/Flutter/.last_build_id
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/ServiceDefinitions.json
+**/macos/Flutter/ephemeral/
+
+# Web related
+**/web/.dart_tool/
+**/web/build/
+
+# Linux/Windows
+**/linux/
+**/windows/
+
+# VS Code settings
+.vscode/
+.idea/
+*.iml
+
+# Environment and sensitive files
+.env
+.env.*
+*.keystore
+*.jks
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+
+# Misc
+pubspec.lock
