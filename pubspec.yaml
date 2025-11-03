@@ -15,9 +15,11 @@ dependencies:
   fl_chart: ^0.63.0
   google_sign_in: ^6.2.1
   google_sign_in_web: ^0.12.3
-  http: ^1.1.2
+  http: ^1.2.0
   shared_preferences: ^2.2.2
   cupertino_icons: ^1.0.8
+  image_picker: ^1.0.4
+  image_picker_for_web: ^3.0.0
 
 dev_dependencies:
   flutter_test:

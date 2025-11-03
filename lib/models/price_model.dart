@@ -1,12 +1,12 @@
 class PriceModel {
   final String? id;
-  final String productName; // corresponds to Go 'Name'
-  final String market;      // corresponds to Go 'Category'
-  final String location;    // corresponds to Go 'Area'
-  final double price;
-  final bool isVerified;
-  final String? imageUrl;   // corresponds to Go 'ImageURL'
-  final String? dateReported; // corresponds to Go 'CreatedAt'
+  final String productName;   // Go: "name"
+  final String market;        // Go: "category"
+  final String location;      // Go: "area"
+  final double price;         // Go: "price"
+  final bool isVerified;      // Go: "is_verified"
+  final String? imageUrl;     // Go: "image_url"
+  final String? dateReported; // Go: "created_at"
 
   PriceModel({
     this.id,
@@ -14,26 +14,32 @@ class PriceModel {
     required this.market,
     required this.location,
     required this.price,
-    required this.isVerified,
+    this.isVerified = false,
     this.imageUrl,
     this.dateReported,
   });
 
-  // ✅ Convert JSON from backend → Dart object
+  // ✅ JSON → Dart
   factory PriceModel.fromJson(Map<String, dynamic> json) {
+    double parsePrice(dynamic value) {
+      if (value is int) return value.toDouble();
+      if (value is String) return double.tryParse(value) ?? 0.0;
+      return (value ?? 0).toDouble();
+    }
+
     return PriceModel(
       id: json['_id'] ?? json['id'] ?? '',
       productName: json['name'] ?? json['productName'] ?? '',
       market: json['category'] ?? json['market'] ?? '',
       location: json['area'] ?? json['location'] ?? '',
-      price: (json['price'] ?? 0).toDouble(),
-      isVerified: json['isVerified'] ?? true, // default true since verified products
+      price: parsePrice(json['price']),
+      isVerified: json['isVerified'] ?? json['is_verified'] ?? false,
       imageUrl: json['image_url'] ?? json['imageUrl'] ?? '',
-      dateReported: json['createdAt'] ?? json['dateReported'] ?? '',
+      dateReported: json['createdAt'] ?? json['created_at'] ?? '',
     );
   }
 
-  // ✅ Convert Dart object → JSON (for posting to backend)
+  // ✅ Dart → JSON
   Map<String, dynamic> toJson() {
     return {
       '_id': id,
@@ -41,9 +47,9 @@ class PriceModel {
       'category': market,
       'area': location,
       'price': price,
-      'isVerified': isVerified,
+      'is_verified': isVerified,
       'image_url': imageUrl,
-      'createdAt': dateReported,
+      'created_at': dateReported,
     };
   }
 }

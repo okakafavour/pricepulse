@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/price_provider.dart';
 import 'screens/login_screen.dart';
-// import 'services/google_auth_service.dart';
 
 void main() {
   runApp(const PricePulseApp());
@@ -16,10 +15,13 @@ class PricePulseApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Auth provider (login state)
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+
+        // Price provider (depends on AuthProvider)
         ChangeNotifierProxyProvider<AuthProvider, PriceProvider>(
-          create: (_) => PriceProvider(AuthProvider()),
-          update: (_, auth, __) => PriceProvider(auth),
+          create: (context) => PriceProvider(context.read<AuthProvider>()),
+          update: (context, auth, previous) => PriceProvider(auth),
         ),
       ],
       child: MaterialApp(

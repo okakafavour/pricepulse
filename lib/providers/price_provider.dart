@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/price_model.dart';
@@ -10,49 +13,111 @@ class PriceProvider with ChangeNotifier {
   PriceProvider(this.authProvider);
 
   List<PriceModel> _prices = [];
-
   List<PriceModel> get prices => _prices;
 
-  final String baseUrl = 'https://your-backend-api.com/api/prices';
+  final String baseUrl = 'http://10.54.2.240:8080/products';
 
+  // Fetch all products
   Future<void> fetchPrices() async {
     final token = authProvider.token;
     if (token == null) return;
 
-    final url = Uri.parse(baseUrl);
-    final response = await http.get(
-      url,
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    try {
+      final response = await http.get(
+        Uri.parse(baseUrl),
+        headers: {'Authorization': 'Bearer $token'},
+      );
 
-    if (response.statusCode == 200) {
-      final List data = json.decode(response.body);
-      _prices = data.map((e) => PriceModel.fromJson(e)).toList();
-      notifyListeners();
-    } else {
-      throw Exception('Failed to fetch prices: ${response.body}');
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        final List<dynamic> data = decoded is List ? decoded : decoded['products'] ?? [];
+        _prices = data.map((e) => PriceModel.fromJson(e)).toList();
+        notifyListeners();
+      } else {
+        throw Exception('Failed to fetch prices');
+      }
+    } catch (e) {
+      debugPrint('Error fetching prices: $e');
+      rethrow;
     }
   }
 
-  Future<void> addPrice(PriceModel price) async {
+  // Add product (web + mobile)
+  Future<void> addPrice({
+    required String productName,
+    required double price,
+    required String area,
+    required String description,
+    required String category,
+    File? imageFile,      // mobile
+    Uint8List? webImage,  // web
+    required BuildContext context,
+  }) async {
     final token = authProvider.token;
-    if (token == null) return;
 
-    final url = Uri.parse(baseUrl);
-    final response = await http.post(
-      url,
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json'
-      },
-      body: json.encode(price.toJson()),
-    );
+    if (productName.isEmpty || price <= 0 || area.isEmpty || category.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all required fields')),
+      );
+      return;
+    }
 
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      _prices.add(price);
-      notifyListeners();
-    } else {
-      throw Exception('Failed to add price: ${response.body}');
+    if (!kIsWeb && imageFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select an image')),
+      );
+      return;
+    }
+
+    if (kIsWeb && webImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select an image')),
+      );
+      return;
+    }
+
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not authenticated')),
+      );
+      return;
+    }
+
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse(baseUrl));
+      request.headers['Authorization'] = 'Bearer $token';
+
+      request.fields['name'] = productName;
+      request.fields['price'] = price.toString();
+      request.fields['area'] = area;
+      request.fields['description'] = description;
+      request.fields['category'] = category;
+
+      if (kIsWeb && webImage != null) {
+        request.files.add(
+          http.MultipartFile.fromBytes('image', webImage, filename: '$productName.png'),
+        );
+      } else if (imageFile != null) {
+        request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+      }
+
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Product added successfully')),
+        );
+        await fetchPrices();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add product: $responseBody')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
 }

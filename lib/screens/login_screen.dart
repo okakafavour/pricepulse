@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import 'register_screen.dart';
-import 'price_list_screen.dart';
+import '../screens/register_screen.dart';
+import '../screens/price_list_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _isGoogleLoading = false;
 
-  /// ✅ Email/Password login
+  /// ✅ Normal Email/Password login
   Future<void> _login(BuildContext context) async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -33,9 +33,14 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (auth.isAuthenticated) {
+        // 🟢 Go to price list screen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const PriceListScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('❌ Login failed — invalid credentials')),
         );
       }
     } catch (e) {
@@ -66,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('❌ Google login failed!')),
+          const SnackBar(content: Text('❌ Google login failed')),
         );
       }
     } catch (e) {
@@ -120,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 30),
 
-                    // Normal Login Button
+                    // 🔹 Normal Login Button
                     _isLoading
                         ? const Center(child: CircularProgressIndicator())
                         : ElevatedButton(
@@ -130,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 20),
 
-                    // Google Login Button
+                    // 🔹 Google Login Button
                     _isGoogleLoading
                         ? const Center(child: CircularProgressIndicator())
                         : ElevatedButton.icon(
@@ -155,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 15),
 
-                    // Register Link
+                    // 🔹 Register link
                     TextButton(
                       onPressed: () {
                         Navigator.push(
